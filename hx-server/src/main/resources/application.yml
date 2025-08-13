@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: hx-server
+  # 不启动 Tomcat 容器: server 这边只需要提供gRPC远程调用服务即可
+  # ，Tomcat 这种 Web 服务用不上启动反而浪费额外资源和端口
+  main:
+    web-application-type: none
+# gRPC 启动端口
+grpc:
+  server:
+    port: 9000

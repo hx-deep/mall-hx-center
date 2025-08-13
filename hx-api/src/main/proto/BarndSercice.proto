@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package com.macro.mall.tiny.proto;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "com.hx.proto";
+option java_multiple_files = true;
+
+
+message ReqProto {
+  uint32 stock_code = 1;
+  uint32 market = 2;
+  string apply_code = 3;
+}
+
+
+
+message ResponseMsgDto {
+  string startDate = 1;
+  int32 listType = 2;
+}
+
+
+service  SendInfoService{
+    rpc  getDateInfo(ReqProto) returns(ResponseMsgDto) {};
+}
