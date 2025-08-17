@@ -1,6 +1,6 @@
 package com.hx.practice.async;
 
-import javafx.util.Pair;
+
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
