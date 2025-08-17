@@ -3,6 +3,7 @@ package com.hx;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 /**
  * @Package: com.hx
@@ -11,8 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author: zjg
  * @date: 2024/7/18 
  */
-//@MapperScan("com.hx")
-@SpringBootApplication
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class HXServiceApplication {
 
 
