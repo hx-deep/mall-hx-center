@@ -158,31 +158,6 @@
 
     </build>
 
-<!--    <profiles>-->
-<!--        <profile>-->
-<!--            <id>dev</id>-->
-<!--            <properties>-->
-<!--                <nacos.namespace>dev</nacos.namespace>-->
-<!--                <nacos.group>dev</nacos.group>-->
-<!--                <nacos.server-addr>8.159.136.149:8838</nacos.server-addr>-->
-<!--            </properties>-->
-<!--            <activation>-->
-<!--                <activeByDefault>true</activeByDefault>-->
-<!--            </activation>-->
-<!--        </profile>-->
 
-<!--        <profile>-->
-<!--            <id>uat</id>-->
-<!--            <properties>-->
-<!--                <nacos.namespace>uat</nacos.namespace>-->
-<!--                <nacos.group>uat</nacos.group>-->
-<!--                <nacos.server-addr>8.159.136.149:8838</nacos.server-addr>-->
-<!--            </properties>-->
-<!--            <activation>-->
-<!--                <activeByDefault>true</activeByDefault>-->
-<!--            </activation>-->
-<!--        </profile>-->
-
-<!--    </profiles>-->
 
 </project>
