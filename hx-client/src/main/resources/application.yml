@@ -15,4 +15,11 @@ grpc:
       negotiation-type: plaintext # 明文传输
 
 
+paypal:
+  client-id: ARZD1uMKTYNi85tBF4uIjE-4Chlc0ehvn5vcKS4O2tXjYY84J8_88Hs_Stg9iyak1XNJ--88IhH5BWE1tN8jh
+  client-secret: EO3TZBT0jXoYs2d5rP4zP82foLwou0QO0DGLpkPAitQJ1Gd6RSumP6rOSibLQOa_77Jj_6nzvKEhoF3Yq13F
+  webhook-id: 1KA153369MP296291855
+  mode: sandbox
+
+
 
