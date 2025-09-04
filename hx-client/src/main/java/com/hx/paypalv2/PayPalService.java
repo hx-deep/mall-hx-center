@@ -1,5 +1,6 @@
 package com.hx.paypalv2;
 
+import com.alibaba.fastjson.JSON;
 import com.hx.domain.*;
 import com.paypal.core.PayPalHttpClient;
 import com.paypal.http.HttpResponse;
@@ -9,6 +10,7 @@ import com.paypal.payments.RefundRequest;
 import com.paypal.payments.Refund;
 import com.paypal.payments.Money;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -110,7 +112,10 @@ public class PayPalService {
     }
 
     /**
-     * 捕获订单支付
+     * 用户授权支付成功，进行扣款操作
+     *      用户通过CreateOrder生成 approveUrl 跳转paypal支付成功后，只是授权，并没有将用户的钱打入我们的paypal账户，
+     *      我们需要通过 CaptureOrder接口，将钱打入我的PayPal账户
+     *
      */
     public PayPalCaptureResponse captureOrder(String orderId) {
         try {
@@ -179,6 +184,7 @@ public class PayPalService {
      */
     public boolean verifyWebhookSignature(String payload, Map<String, String> headers) {
         try {
+            log.info("webhook验签请求头信息：{}", headers.toString());
             String transmissionId = headers.get("PAYPAL-TRANSMISSION-ID");
             String certId = headers.get("PAYPAL-CERT-ID");
             String transmissionSig = headers.get("PAYPAL-TRANSMISSION-SIG");
@@ -283,6 +289,50 @@ public class PayPalService {
             log.error("获取PayPal订单详情失败, orderId: {}", orderId, e);
             throw new RuntimeException("获取PayPal订单详情失败: " + e.getMessage());
         }
+    }
+
+    /**
+     *  买家批准了这个订单：商户需要调用捕获api,将钱打入我的PayPal账户
+     * @param eventJson
+     */
+    public void handleOrderApproved(JSONObject eventJson) {
+        log.info("买家批准了这个订单支付回调信息：{}", eventJson);
+        JSONObject resource = eventJson.getJSONObject("resource");
+        String orderId = resource.getString("id");
+        //捕获订单支付
+        PayPalCaptureResponse payPalCaptureResponse = captureOrder(orderId);
+
+        log.info("PayPal订单已批准 - 订单ID: {},捕获订单支付详情：{}", orderId, JSON.toJSONString(payPalCaptureResponse));
+        //需要在订单表中存储这个id,为后续的退款做准备
+        String captureId = payPalCaptureResponse.getCaptureId();
+
+        // 可以在这里更新订单状态或执行其他业务逻辑
+        // orderService.updateOrderStatus(orderId, OrderStatus.APPROVED);
+    }
+
+
+
+
+    // Webhook事件处理方法
+    private void handlePaymentCaptured(JSONObject eventJson) {
+        log.info("支付成功回调信息：{}", eventJson.toString());
+        JSONObject resource = eventJson.getJSONObject("resource");
+        String captureId = resource.getString("id");
+
+        // 从supplementary_data中获取order_id（如果存在）
+        String orderId = null;
+        if (resource.has("supplementary_data") &&
+                resource.getJSONObject("supplementary_data").has("related_ids") &&
+                resource.getJSONObject("supplementary_data").getJSONObject("related_ids").has("order_id")) {
+            orderId = resource.getJSONObject("supplementary_data")
+                    .getJSONObject("related_ids").getString("order_id");
+        }
+        log.info("PayPal支付完成 - 订单ID: {}, 捕获ID: {}", orderId, captureId);
+        PayPalOrderDetails orderDetails = getOrderDetails(orderId);
+        log.info("获取的订单详情：{}", JSON.toJSONString(orderDetails));
+
+        // 更新订单状态为已支付
+        // orderService.updateOrderStatus(orderId, OrderStatus.PAID);
     }
 }
 

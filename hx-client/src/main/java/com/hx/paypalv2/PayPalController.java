@@ -82,18 +82,18 @@ public class PayPalController {
         }
     }
 
-    /**
-     * 支付取消回调
-     */
-    @GetMapping("/cancel")
-    public ResponseEntity<PayPalCallbackResponse> paymentCancel(@RequestParam String token) {
-        log.info("PayPal支付已取消，订单ID: {}", token);
-        return ResponseEntity.ok(PayPalCallbackResponse.builder()
-                .success(false)
-                .message("支付已取消")
-                .orderId(token)
-                .build());
-    }
+//    /**
+//     * 支付取消回调
+//     */
+//    @GetMapping("/cancel")
+//    public ResponseEntity<PayPalCallbackResponse> paymentCancel(@RequestParam String token) {
+//        log.info("PayPal支付已取消，订单ID: {}", token);
+//        return ResponseEntity.ok(PayPalCallbackResponse.builder()
+//                .success(false)
+//                .message("支付已取消")
+//                .orderId(token)
+//                .build());
+//    }
 
     /**
      * Webhook回调处理
@@ -125,6 +125,7 @@ public class PayPalController {
             // 处理不同类型的事件
             switch (eventType) {
                 case "PAYMENT.CAPTURE.COMPLETED":
+                    //当捕获api调用完成之后订单才真正的支付成功
                     handlePaymentCaptured(eventJson);
                     break;
                 case "PAYMENT.CAPTURE.DENIED":
@@ -134,7 +135,8 @@ public class PayPalController {
                     handlePaymentRefunded(eventJson);
                     break;
                 case "CHECKOUT.ORDER.APPROVED":
-                    handleOrderApproved(eventJson);
+                    //买家批准了这个订单：商户需要调用捕获api,将钱打入我的PayPal账户
+                    payPalService.handleOrderApproved(eventJson);
                     break;
                 default:
                     log.info("未处理的PayPal事件类型: {}", eventType);
@@ -183,6 +185,7 @@ public class PayPalController {
 
     // Webhook事件处理方法
     private void handlePaymentCaptured(JSONObject eventJson) {
+        log.info("支付成功回调信息：{}", eventJson.toString());
         JSONObject resource = eventJson.getJSONObject("resource");
         String captureId = resource.getString("id");
 
@@ -219,15 +222,5 @@ public class PayPalController {
 
         // 更新订单状态为已退款
         // orderService.updateOrderStatus(orderId, OrderStatus.REFUNDED);
-    }
-
-    private void handleOrderApproved(JSONObject eventJson) {
-        JSONObject resource = eventJson.getJSONObject("resource");
-        String orderId = resource.getString("id");
-
-        log.info("PayPal订单已批准 - 订单ID: {}", orderId);
-
-        // 可以在这里更新订单状态或执行其他业务逻辑
-        // orderService.updateOrderStatus(orderId, OrderStatus.APPROVED);
     }
 }
