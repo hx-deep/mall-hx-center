@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 8.19.16.19:8848
+      namespace: dev
+      group: dev
+      username: nacos
+      password: nacos
+      config:
+        file-extension: yml
+        extension-configs:
+          - data-id: hx-server.yml
+            group: dev
+            refresh: true
+      discovery:
+        server-addr: 8.1.12.19:8848
+        username: nacos
+        password: nacos
+        namespace: dev  # 可选，建议生产环境使用
+        group: dev
+    config:
+      import:
+        optional:nacos:

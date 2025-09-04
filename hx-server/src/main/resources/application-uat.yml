@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: 8.19.16.149:8848
+      namespace: uat
+      group: uat
+      config:
+        file-extension: yml
+      discovery:
+        server-addr: 8.1.12.15:8848
+        username: nacos
+        password: nacos
+        namespace: uat  # 可选，建议生产环境使用
+        group: uat
