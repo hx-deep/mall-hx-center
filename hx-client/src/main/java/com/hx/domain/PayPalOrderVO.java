@@ -1,10 +1,10 @@
 package com.hx.domain;
+
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
 /**
  * TODO
  *
@@ -15,10 +15,8 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalRefundResponse {
-    private String refundId;
+public class PayPalOrderVO {
+    private String orderId;
     private String status;
-    private BigDecimal amount;
-    private String currency;
-    private String createTime;
+    private String approvalUrl;
 }

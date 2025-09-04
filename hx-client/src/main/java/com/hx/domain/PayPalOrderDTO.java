@@ -18,17 +18,42 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalOrderRequest {
+public class PayPalOrderDTO {
 
-
+    /**
+     * 系统订单id
+     */
     private String orderId;
+    /**
+     * 订单金额
+     */
     private BigDecimal amount;
+    /**
+     * 单位
+     */
     private String currency;
+    /**
+     * 描述
+     */
     private String description;
+    /**
+     * 产品名称
+     */
     private String productName;
+    /**
+     * 品牌名
+     */
     private String brandName;
+    /**
+     * 支付成功回调地址
+     */
     private String returnUrl;
+    /**
+     * 取消支付的回调地址
+     */
     private String cancelUrl;
-
+    /**
+     * 用户的userId
+     */
     private String userId;
 }

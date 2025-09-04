@@ -34,14 +34,14 @@ public class PayPalController {
      * 创建支付订单
      */
     @PostMapping("/create-order")
-    public ResponseEntity<PayPalOrderResponse> createOrder(@RequestBody PayPalOrderRequest request) {
+    public ResponseEntity<PayPalOrderVO> createOrder(@RequestBody PayPalOrderDTO request) {
         try {
-            PayPalOrderResponse response = payPalService.createOrder(request);
+            PayPalOrderVO response = payPalService.createOrder(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("创建PayPal订单失败", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(PayPalOrderResponse.builder()
+                    .body(PayPalOrderVO.builder()
                             .orderId(null)
                             .status("ERROR")
                             .approvalUrl(null)
@@ -53,17 +53,17 @@ public class PayPalController {
      * 支付成功回调
      */
     @GetMapping("/success")
-    public ResponseEntity<PayPalCallbackResponse> paymentSuccess(
+    public ResponseEntity<PayPalCallbackVO> paymentSuccess(
             @RequestParam String orderId,
             @RequestParam(required = false) String PayerID) {
         try {
             // 捕获订单支付
-            PayPalCaptureResponse capture = payPalService.captureOrder(orderId);
+            PayPalCaptureVO capture = payPalService.captureOrder(orderId);
 
             log.info("PayPal支付成功，订单ID: {}, 捕获ID: {}",
                     capture.getOrderId(), capture.getCaptureId());
 
-            return ResponseEntity.ok(PayPalCallbackResponse.builder()
+            return ResponseEntity.ok(PayPalCallbackVO.builder()
                     .success(true)
                     .message("支付成功")
                     .orderId(capture.getOrderId())
@@ -75,11 +75,17 @@ public class PayPalController {
         } catch (Exception e) {
             log.error("处理PayPal支付成功回调失败", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(PayPalCallbackResponse.builder()
+                    .body(PayPalCallbackVO.builder()
                             .success(false)
                             .message("处理支付回调失败: " + e.getMessage())
                             .build());
         }
+    }
+
+    @GetMapping("/captureInfo")
+    public ResponseEntity<Boolean> getCapture(@RequestParam String captureId) {
+        Boolean capture = payPalService.getCapture(captureId);
+        return ResponseEntity.ok(capture);
     }
 
 //    /**
@@ -154,14 +160,14 @@ public class PayPalController {
      * 退款接口
      */
     @PostMapping("/refund")
-    public ResponseEntity<PayPalRefundResponse> refundPayment(@RequestBody PayPalRefundRequest request) {
+    public ResponseEntity<PayPalRefundVO> refundPayment(@RequestBody PayPalRefundDTO request) {
         try {
-            PayPalRefundResponse response = payPalService.refundPayment(request);
+            PayPalRefundVO response = payPalService.refundPayment(request);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("PayPal退款失败", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(PayPalRefundResponse.builder()
+                    .body(PayPalRefundVO.builder()
                             .refundId(null)
                             .status("ERROR")
                             .build());
@@ -172,9 +178,9 @@ public class PayPalController {
      * 获取订单详情
      */
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<PayPalOrderDetails> getOrderDetails(@PathVariable String orderId) {
+    public ResponseEntity<PayPalOrderDetailsVO> getOrderDetails(@PathVariable String orderId) {
         try {
-            PayPalOrderDetails details = payPalService.getOrderDetails(orderId);
+            PayPalOrderDetailsVO details = payPalService.getOrderDetails(orderId);
             return ResponseEntity.ok(details);
         } catch (Exception e) {
             log.error("获取订单详情失败", e);

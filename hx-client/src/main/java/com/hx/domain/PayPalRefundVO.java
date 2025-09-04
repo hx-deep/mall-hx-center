@@ -1,4 +1,11 @@
 package com.hx.domain;
+
+/**
+ * TODO
+ *
+ * @author zhang jiagu
+ * @date 2025/9/4
+ **/
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,9 +22,11 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalRefundRequest {
-    private String captureId;
+public class PayPalRefundVO {
+    private String refundId;
+    private String status;
     private BigDecimal amount;
     private String currency;
-    private String note;
+    private String createTime;
 }
+

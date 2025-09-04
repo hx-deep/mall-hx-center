@@ -1,10 +1,10 @@
 package com.hx.domain;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 /**
  * TODO
  *
@@ -15,8 +15,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalOrderResponse {
+public class PayPalOrderDetailsVO {
     private String orderId;
     private String status;
-    private String approvalUrl;
+    private String createTime;
+    private String updateTime;
+    private String intent;
 }

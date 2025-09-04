@@ -15,11 +15,9 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalCallbackResponse {
-    private boolean success;
-    private String message;
-    private String orderId;
+public class PayPalRefundDTO {
     private String captureId;
     private BigDecimal amount;
     private String currency;
+    private String note;
 }

@@ -1,13 +1,10 @@
 package com.hx.domain;
-
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-
 /**
  * TODO
  *
@@ -18,11 +15,11 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayPalCaptureResponse {
+public class PayPalCallbackVO {
+    private boolean success;
+    private String message;
     private String orderId;
     private String captureId;
-    private String status;
     private BigDecimal amount;
     private String currency;
-    private String createTime;
 }

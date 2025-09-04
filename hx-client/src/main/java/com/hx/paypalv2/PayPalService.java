@@ -5,10 +5,11 @@ import com.hx.domain.*;
 import com.paypal.core.PayPalHttpClient;
 import com.paypal.http.HttpResponse;
 import com.paypal.orders.*;
-import com.paypal.payments.CapturesRefundRequest;
-import com.paypal.payments.RefundRequest;
-import com.paypal.payments.Refund;
+import com.paypal.orders.Capture;
+import com.paypal.orders.LinkDescription;
+import com.paypal.payments.*;
 import com.paypal.payments.Money;
+import com.paypal.payments.Refund;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.URL;
@@ -50,7 +52,7 @@ public class PayPalService {
     /**
      * 创建订单
      */
-    public PayPalOrderResponse createOrder(PayPalOrderRequest request) {
+    public PayPalOrderVO createOrder(PayPalOrderDTO request) {
         try {
             // 构建订单请求
             OrderRequest orderRequest = new OrderRequest();
@@ -91,7 +93,7 @@ public class PayPalService {
             // 执行请求
             HttpResponse<Order> response = payPalHttpClient.execute(ordersCreateRequest);
             Order order = response.result();
-
+            log.info("创建订单---订单详细信息：{}", order.toString());
             // 获取支付链接
             String approvalUrl = order.links().stream()
                     .filter(link -> "approve".equals(link.rel()))
@@ -99,7 +101,7 @@ public class PayPalService {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("未找到PayPal支付链接"));
 
-            return PayPalOrderResponse.builder()
+            return PayPalOrderVO.builder()
                     .orderId(order.id())
                     .status(order.status())
                     .approvalUrl(approvalUrl)
@@ -117,7 +119,7 @@ public class PayPalService {
      *      我们需要通过 CaptureOrder接口，将钱打入我的PayPal账户
      *
      */
-    public PayPalCaptureResponse captureOrder(String orderId) {
+    public PayPalCaptureVO captureOrder(String orderId) {
         try {
             OrdersCaptureRequest request = new OrdersCaptureRequest(orderId);
             request.prefer("return=representation");
@@ -125,12 +127,12 @@ public class PayPalService {
 
             HttpResponse<Order> response = payPalHttpClient.execute(request);
             Order order = response.result();
-
+            log.info("捕获订单的详细信息：{}", JSON.toJSONString(order));
             // 获取捕获详情
             Capture capture = order.purchaseUnits().get(0)
                     .payments().captures().get(0);
 
-            return PayPalCaptureResponse.builder()
+            return PayPalCaptureVO.builder()
                     .orderId(order.id())
                     .captureId(capture.id())
                     .status(capture.status())
@@ -146,9 +148,28 @@ public class PayPalService {
     }
 
     /**
+     * 支付后查询扣款信息
+     */
+    public Boolean getCapture(String captureId) {
+        // 扣款查询
+        CapturesGetRequest restRequest = new CapturesGetRequest(captureId);
+        HttpResponse<com.paypal.payments.Capture> response = null;
+        try {
+            response = payPalHttpClient.execute(restRequest);
+        } catch (IOException e) {
+            log.info("查询支付扣款失败：{}",e.getMessage());
+            return false;
+        }
+        log.info("Capture ids: " + response.result().id());
+
+        com.paypal.payments.Capture result = response.result();
+        return true;
+    }
+
+    /**
      * 退款
      */
-    public PayPalRefundResponse refundPayment(PayPalRefundRequest request) {
+    public PayPalRefundVO refundPayment(PayPalRefundDTO request) {
         try {
             CapturesRefundRequest refundRequest = new CapturesRefundRequest(request.getCaptureId());
 
@@ -164,8 +185,8 @@ public class PayPalService {
 
             HttpResponse<Refund> response = payPalHttpClient.execute(refundRequest);
             Refund refund = response.result();
-
-            return PayPalRefundResponse.builder()
+            log.info("退款订单的详细信息{}", JSON.toJSONString(refund));
+            return PayPalRefundVO.builder()
                     .refundId(refund.id())
                     .status(refund.status())
                     .amount(new BigDecimal(refund.amount().value()))
@@ -213,7 +234,17 @@ public class PayPalService {
         }
     }
 
-
+    /**
+     *
+     * @param payload
+     * @param transmissionId 传输的唯一 ID
+     * @param transmissionTime 消息传输的日期和时间
+     * @param certUrl
+     * @param authAlgo
+     * @param transmissionSig
+     * @return
+     * @throws Exception
+     */
     // 3. Webhook 签名验证
     private boolean verifyWebhookSignature(String payload, String transmissionId, String transmissionTime,
                                            String certUrl, String authAlgo, String transmissionSig) throws Exception {
@@ -240,6 +271,8 @@ public class PayPalService {
         byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
     }
+
+
 
     private String buildExpectedSignature(String transmissionId, String transmissionTime,
                                           String webhookId, String payload, String certId,
@@ -271,13 +304,13 @@ public class PayPalService {
     /**
      * 获取订单详情
      */
-    public PayPalOrderDetails getOrderDetails(String orderId) {
+    public PayPalOrderDetailsVO getOrderDetails(String orderId) {
         try {
             OrdersGetRequest request = new OrdersGetRequest(orderId);
             HttpResponse<Order> response = payPalHttpClient.execute(request);
             Order order = response.result();
 
-            return PayPalOrderDetails.builder()
+            return PayPalOrderDetailsVO.builder()
                     .orderId(order.id())
                     .status(order.status())
                     .createTime(order.createTime())
@@ -292,7 +325,7 @@ public class PayPalService {
     }
 
     /**
-     *  买家批准了这个订单：商户需要调用捕获api,将钱打入我的PayPal账户
+     *  买家批准了这个订单：钱还未进入到paypal账户，商户需要调用捕获api,将钱打入我的PayPal账户
      * @param eventJson
      */
     public void handleOrderApproved(JSONObject eventJson) {
@@ -300,7 +333,7 @@ public class PayPalService {
         JSONObject resource = eventJson.getJSONObject("resource");
         String orderId = resource.getString("id");
         //捕获订单支付
-        PayPalCaptureResponse payPalCaptureResponse = captureOrder(orderId);
+        PayPalCaptureVO payPalCaptureResponse = captureOrder(orderId);
 
         log.info("PayPal订单已批准 - 订单ID: {},捕获订单支付详情：{}", orderId, JSON.toJSONString(payPalCaptureResponse));
         //需要在订单表中存储这个id,为后续的退款做准备
@@ -328,11 +361,14 @@ public class PayPalService {
                     .getJSONObject("related_ids").getString("order_id");
         }
         log.info("PayPal支付完成 - 订单ID: {}, 捕获ID: {}", orderId, captureId);
-        PayPalOrderDetails orderDetails = getOrderDetails(orderId);
+        PayPalOrderDetailsVO orderDetails = getOrderDetails(orderId);
         log.info("获取的订单详情：{}", JSON.toJSONString(orderDetails));
 
         // 更新订单状态为已支付
         // orderService.updateOrderStatus(orderId, OrderStatus.PAID);
     }
+
+
+
 }
 
